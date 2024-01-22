@@ -122,12 +122,11 @@ const TerminalEmulator = () => {
             <Terminal
                 commands={commands}
                 welcomeMessage={'Welcome to the dragon script terminal!'}
-                promptLabel={'me@React:~$'}
+                promptLabel={'me@dragon:~$'}
             />
         </div>
     )
 }
-
 export default TerminalEmulator
 ```
 
