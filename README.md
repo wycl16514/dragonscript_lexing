@@ -182,10 +182,10 @@ export default class Scanner {
     static ELSE = 29 //"else"
     static FALSE = 30 //"false"
     static TRUE = 31 //"true"
-    //fn,fun,functions are key word for defining functions
+    //func,is key word for defining functions
     static FN = 32 //"fn"
     static FUN = 33 //"fun"
-    static FUNCTION = 34 // "function"
+    static FUNC = 34 // "function"
     static FOR = 35 //"for"
     static IF = 36 //"if"
     /*
@@ -205,6 +205,7 @@ export default class Scanner {
     static VAR = 44
     static WHILE = 45
     static EOF = 46 // indicate end of input
+    static COMMENT = 47
     constructor(source) {
         this.source = source
         this.current = 0
@@ -230,7 +231,7 @@ when we doing a big project, the best way to make it right is cut it into small 
 
 ```js
 import Scanner from './token'
-describe("Testin Scanner", () => {
+describe("Testing single char operator", () => {
     it("should return EOS token for empty source", () => {
         const scanner = Scanner('')
         const eos_token = scanner.scan()
@@ -406,7 +407,9 @@ it("shoud return right paren token for )", () => {
         })
     })
 ```
+
 the newly added cases should all fail and we can add more case in the switch statement of function scan
+
 ```js
   case ')':
                     this.current += 1
@@ -436,6 +439,204 @@ the newly added cases should all fail and we can add more case in the switch sta
                 case '*':
                     this.current += 1
                     return this.makeToken("" + c, Scanner.START, this.line)
+                default:
+                    //skip unrecognize character
+                    this.current += 1
+                    console.log("Scanning unrecognize chara: ", c)
+                    return null
 
 ```
-save the changes and we can see all the tests are passed.
+save the changes and we can see all the tests are passed.Now let's consider two characters operator such as "!=", ">=", when we visit the first character which is "!", ">", "<", then we need to read the next character, if the next one is "=", we need to group this two characters as one unit and return the right token, let's design the test cases first, in scanner.test.js we add following test case:
+```js
+describe("Testing double chars operator", () => {
+    it("shoud return BANG_EQUAL token for !=", () => {
+        let scanner = new Scanner('!=')
+        let bang_equal_toke = scanner.scan()
+        expect(bang_equal_toke).toMatchObject({
+            lexeme: "!=",
+            token: Scanner.BANG_EQUAL,
+            line: 0,
+        })
+    })
+
+    it("shoud return EQUAL_EQUAL token for ==", () => {
+        let scanner = new Scanner('==')
+        let equal_equal_toke = scanner.scan()
+        expect(equal_equal_toke).toMatchObject({
+            lexeme: "==",
+            token: Scanner.EQUAL_EQUAL,
+            line: 0,
+        })
+    })
+
+    it("shoud return LESS_EQUAL token for <=", () => {
+        let scanner = new Scanner('<=')
+        let less_equal_toke = scanner.scan()
+        expect(less_equal_toke).toMatchObject({
+            lexeme: "<=",
+            token: Scanner.LESS_EQUAL,
+            line: 0,
+        })
+    })
+
+    it("shoud return GREATER_EQUAL token for >=", () => {
+        let scanner = new Scanner('>=')
+        let greater_equal_token = scanner.scan()
+        expect(greater_equal_toke).toMatchObject({
+            lexeme: ">=",
+            token: Scanner.GREATER_EQUAL,
+            line: 0,
+        })
+    })
+})
+
+```
+run command "npm test" and make sure testing cases aboved are all fail and we write code in token.js to make thoses cases passed, first we add a new function called "match(expected_char)" it will check whether current char in source is the same as expected_char, and we add code in function scan to check whether two chars from current pos in the souce can group into one and can match two char operator:
+```js
+  match = (expected_char) => {
+        if (this.current >= this.source.length) {
+            return false 
+        }
+
+        if (this.source[this.current] === expected_char) {
+            this.current += 1
+            return true 
+        }
+
+        return false
+    }'
+scan = ()=> {
+     while (this.current < this.source.length) {
+            const c = this.source[this.current]
+            switch (c) {
+                ....
+                 //check two char operator
+                case '!':
+                    var token_type = Scanner.BANG
+                    var char = '!'
+                    this.current += 1
+                    if (this.match('=')) {
+                        token_type = Scanner.BANG_EQUAL
+                        char = '!='
+                    }
+                    return this.makeToken(char, token_type, this.line)
+                case '=':
+                    token_type = Scanner.EQUAL
+                    char = '='
+                    this.current += 1
+                    if (this.match('=')) {
+                        token_type = Scanner.EQUAL_EQUAL
+                        char = '=='
+                    }
+                    return this.makeToken(char, token_type, this.line)
+                case '<':
+                    token_type = Scanner.LESS
+                    char = '='
+                    this.current += 1
+                    if (this.match('=')) {
+                        token_type = Scanner.LESS_EQUAL
+                        char = '<='
+                    }
+                    return this.makeToken(char, token_type, this.line)
+                case '>':
+                    token_type = Scanner.GREATER
+                    char = '>'
+                    this.current += 1
+                    if (this.match('=')) {
+                        token_type = Scanner.GREATER_EQUAL
+                        char = '>='
+                    }
+                    return this.makeToken(char, token_type, this.line)
+               ....
+            }
+      }
+}
+```
+After adding the aboved code, our newly add testing cases can be passed. Be noticed we break the test driven principle, that is we have satisfy some testing cases we havn't create yet,
+we havn't add test cases for '>' , '<', '=' in the "Testing single char operator" test suit, now we add those testing case in the test suit:
+```js
+describe("Testing single char operator", () => {
+ ...
+  it("shoud return bang token for !", () => {
+        let scanner = new Scanner('!')
+        let bang_token = scanner.scan()
+        expect(bang_token).toMatchObject({
+            lexeme: "!",
+            token: Scanner.BANG,
+            line: 0,
+        })
+    })
+
+    it("shoud return less token for <", () => {
+        let scanner = new Scanner('<')
+        let less_token = scanner.scan()
+        expect(less_token).toMatchObject({
+            lexeme: "<",
+            token: Scanner.LESS,
+            line: 0,
+        })
+    })
+
+    it("shoud return greater token for >", () => {
+        let scanner = new Scanner('>')
+        let greater_token = scanner.scan()
+        expect(greater_token).toMatchObject({
+            lexeme: ">",
+            token: Scanner.GREATER,
+            line: 0,
+        })
+    })
+})
+```
+run "npm test" and make sure all tests can be passed. There is a two char operator we need to handle carefully that is '//', this is comment operator, any string or chars following this operator until the end of the line should group into one token with category COMMENT, now add this test case in test suit of "Testing double chars operator":
+```js
+ it("should return COMMENT token for //", ()=>{
+        let scanner = new Scanner("//this is a line of comment")
+        let comment_token = scanner.scan()
+        expect(comment_token).toMatchObject({
+            lexeme: "this is a line of comment",
+            token: Scanner.COMMENT,
+            line: 0,})
+    })
+```
+this case will fail, and now we add code in Scanner to make it pass, first we add a function peek, which is used to read the current char and advance the pointer point to next char,
+and add a function named isAtEnd to check whether current char is at the end of the current line, the code we add in token.js is as following:
+```js
+peek = () => {
+        //only return the current char 
+        if (this.current >= this.source.length) {
+            return '\0'
+        }
+        return this.source[this.current]
+    }
+
+scan = () => {
+        while (this.current < this.source.length) {
+            const c = this.source[this.current]
+            switch (c) {
+            ....
+             case '/':
+                    token_type = Scanner.SLASH
+                    char = '/'
+                    this.current += 1
+                    if (this.match('/')) {
+                        //encounter comment operator, ingonre all chars until the end of the line
+                        char = ""
+                        token_type = Scanner.COMMENT
+                        while (true) {
+                            const cur_char = this.peek()
+                            if (cur_char == '\0' || cur_char == '\n') {
+                                break
+                            }
+                            char += cur_char
+                            this.current += 1
+                        }
+                    }
+                    return this.makeToken(char, token_type, this.line)
+            ...
+           }
+
+         return {}
+        }
+}
+```
