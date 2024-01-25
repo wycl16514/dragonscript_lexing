@@ -443,7 +443,6 @@ the newly added cases should all fail and we can add more case in the switch sta
                     //skip unrecognize character
                     this.current += 1
                     console.log("Scanning unrecognize chara: ", c)
-                    return null
 
 ```
 save the changes and we can see all the tests are passed.Now let's consider two characters operator such as "!=", ">=", when we visit the first character which is "!", ">", "<", then we need to read the next character, if the next one is "=", we need to group this two characters as one unit and return the right token, let's design the test cases first, in scanner.test.js we add following test case:
@@ -640,3 +639,35 @@ scan = () => {
         }
 }
 ```
+then we can make sure the newly added test case can be passed. Let's add some corn test cases, in scanner.test.js, we add a new testsuit as following:
+```js
+describe("Testing space and newline", () => {
+    it("should ignore space for token", () => {
+        let scanner = new Scanner("  \t\r >=")
+        let greater_equal = scanner.scan()
+        expect(greater_equal).toMatchObject({
+            lexeme: ">=",
+            token: Scanner.GREATER_EQUAL,
+            line: 0,
+        })
+    })
+
+    it("should count the right line number", () => {
+        let scanner = new Scanner("\n\n\n>=")
+        let greater_equal = scanner.scan()
+        expect(greater_equal).toMatchObject({
+            lexeme: ">=",
+            token: Scanner.GREATER_EQUAL,
+            line: 3,
+        })
+    })
+})
+```
+run the test and you will found the first one passed, and the second one fail, let's add some code to make the second one passed, add a new case in token.js:
+```js
+case '\n':
+    this.line += 1
+    this.current += 1
+    continue
+```
+when we encounter rewline character, we increase the line variable and make sure we correctly count the line numbers.
