@@ -303,3 +303,222 @@ if (this.isDigit(this.peek())) {
 }
 ```
 in above code, if we go into number checking state, the scanner will only accept digit and '.', if it see any characters that are other than these two, it will report error. Now we are done with identifiers now.
+
+Let‘s see how can we handle key words, key words are a little subset of identifiers, they are special string for special purpose, let's add a key word test case first:
+```js
+it("should return token LET for key word let", () => {
+        let scanner = new Scanner("let")
+        let let_token = scanner.scan()
+        expect(let_token).toMatchObject({
+            lexeme: "let",
+            token: Scanner.LET,
+            line: 0,
+        })
+    })
+```
+run "npm test" make sure the case can be failed. Now let's add code to handle it, key word is special case for identifier, we will save all key words into a map, when a string is recognize as identifier, then we look into the keyword map, if the string is saved in the map, then we set it as key word token, otherwise we set it as identifier, let's add a map object in token.js:
+```js
+initKeywords = ()=> {
+        this.key_words = {
+            "let": Scanner.LET,
+        }
+    }
+
+    constructor(source) {
+        this.source = source
+        this.current = 0
+        this.line = 0
+        this.initKeywords()
+    }
+```
+then when we get recognize an identifier, we check whether it is in key word map or not, if it is, then we return it as key word token:
+```js
+else if (this.isAlpha(this.peek())) {
+                        char = ""
+                        while (this.isAlphaNumberic(this.peek())) {
+                            char += this.peek()
+                            this.current += 1
+                        }
+                        if (this.key_words[char]) {
+                            return this.makeToken(char, this.key_words[char], this.line)
+                        }
+                        return this.makeToken(char, Scanner.IDENTIFIER, this.line)
+                    }
+```
+now run the test again and make sure it can passed, we now can add all test cases for key words:
+```js
+it("should return token AND for key word and", () => {
+        let scanner = new Scanner("and")
+        let and_token = scanner.scan()
+        expect(and_token).toMatchObject({
+            lexeme: "and",
+            token: Scanner.AND,
+            line: 0,
+        })
+    })
+
+    it("should return token CLASS for key word class", () => {
+        let scanner = new Scanner("class")
+        let keyword_token = scanner.scan()
+        expect(keyword_token).toMatchObject({
+            lexeme: "class",
+            token: Scanner.CLASS,
+            line: 0,
+        })
+    })
+
+    it("should return token IF for key word if", () => {
+        let scanner = new Scanner("if")
+        let keyword_token = scanner.scan()
+        expect(keyword_token).toMatchObject({
+            lexeme: "if",
+            token: Scanner.IF,
+            line: 0,
+        })
+    })
+
+    it("should return token ELSE for key word ELSE", () => {
+        let scanner = new Scanner("else")
+        let keyword_token = scanner.scan()
+        expect(keyword_token).toMatchObject({
+            lexeme: "else",
+            token: Scanner.ELSE,
+            line: 0,
+        })
+    })
+
+    it("should return token TRUE for key word true", () => {
+        let scanner = new Scanner("true")
+        let keyword_token = scanner.scan()
+        expect(keyword_token).toMatchObject({
+            lexeme: "true",
+            token: Scanner.TRUE,
+            line: 0,
+        })
+    })
+
+    it("should return token FALSE for key word false", () => {
+        let scanner = new Scanner("false")
+        let keyword_token = scanner.scan()
+        expect(keyword_token).toMatchObject({
+            lexeme: "false",
+            token: Scanner.FALSE,
+            line: 0,
+        })
+    })
+
+    it("should return token FOR for key word for", () => {
+        let scanner = new Scanner("for")
+        let keyword_token = scanner.scan()
+        expect(keyword_token).toMatchObject({
+            lexeme: "for",
+            token: Scanner.CLASS,
+            line: 0,
+        })
+    })
+
+    it("should return token WHILE for key word while", () => {
+        let scanner = new Scanner("while")
+        let keyword_token = scanner.scan()
+        expect(keyword_token).toMatchObject({
+            lexeme: "while",
+            token: Scanner.WHILE,
+            line: 0,
+        })
+    })
+
+    it("should return token FUNC for key word func", () => {
+        let scanner = new Scanner("func")
+        let keyword_token = scanner.scan()
+        expect(keyword_token).toMatchObject({
+            lexeme: "func",
+            token: Scanner.FUNC,
+            line: 0,
+        })
+    })
+
+    it("should return token NIL for key word nil", () => {
+        let scanner = new Scanner("nil")
+        let keyword_token = scanner.scan()
+        expect(keyword_token).toMatchObject({
+            lexeme: "nil",
+            token: Scanner.NIL,
+            line: 0,
+        })
+    })
+
+    it("should return token PRINT for key word print", () => {
+        let scanner = new Scanner("print")
+        let keyword_token = scanner.scan()
+        expect(keyword_token).toMatchObject({
+            lexeme: "print",
+            token: Scanner.PRINT,
+            line: 0,
+        })
+    })
+
+    it("should return token RETURN for key word return", () => {
+        let scanner = new Scanner("return")
+        let keyword_token = scanner.scan()
+        expect(keyword_token).toMatchObject({
+            lexeme: "return",
+            token: Scanner.RETURN,
+            line: 0,
+        })
+    })
+
+    it("should return token SUPER for key word super", () => {
+        let scanner = new Scanner("super")
+        let keyword_token = scanner.scan()
+        expect(keyword_token).toMatchObject({
+            lexeme: "super",
+            token: Scanner.SUPER,
+            line: 0,
+        })
+    })
+
+    it("should return token THIS for key word this", () => {
+        let scanner = new Scanner("this")
+        let keyword_token = scanner.scan()
+        expect(keyword_token).toMatchObject({
+            lexeme: "this",
+            token: Scanner.THIS,
+            line: 0,
+        })
+    })
+
+    it("should return token VAR for key word var", () => {
+        let scanner = new Scanner("var")
+        let keyword_token = scanner.scan()
+        expect(keyword_token).toMatchObject({
+            lexeme: "var",
+            token: Scanner.VAR,
+            line: 0,
+        })
+    })
+```
+now we can add those key words to map and make all those cases can passed:
+```js
+ initKeywords = () => {
+        this.key_words = {
+            "let": Scanner.LET,
+            "and": Scanner.AND,
+            "class": Scanner.CLASS,
+            "if": Scanner.IF,
+            "else": Scanner.ELSE,
+            "true": Scanner.TRUE,
+            "false": Scanner.FALSE,
+            "for": Scanner.FOR,
+            "while": Scanner.WHILE,
+            "func": Scanner.FUNC,
+            "nil": Scanner.NIL,
+            "print": Scanner.PRINT,
+            "return": Scanner.RETURN,
+            "super": Scanner.SUPER,
+            "this": Scanner.THIS,
+            "var": Scanner.VAR,
+        }
+    }
+
+```
+after completing above code, make sure all test cases can be passed, that's all about how we handling key words.
