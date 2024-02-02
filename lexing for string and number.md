@@ -219,3 +219,87 @@ if (this.isDigit(this.peek())) {
 }
 ```
 make sure the newly add test case can be passed, congratulation! You have done a great job!
+
+Now let's see how to lex identifier and keyword, they are a liitle bit tricky. keyword has special meaning in programming language, they are used to define variable or construct control blocks, key words can only composited by alphabet, and identifers can composited by alphabet, number and some special character, let's see how we can construct tokens for keyword and identifiers.
+
+first we add a static value for identifier:
+```js
+static IDENTIFIER = 46
+```
+second we add two helper functions, one or checking character is alpha, one for checking alpha or number:
+```js
+ isAlpha = (c) => {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_'
+    }
+
+    isAlphaNumberic = (c) => {
+        return this.isAlpha(c) || this.isDigit(c)
+    }
+```
+and we handle lexing of identifer first. Identifier should start with alpha and following by alpha, number or underscore, such as b_123,
+timer_counter, it can't start by underscore or number, let's add the first test case for identifer:
+```js
+describe("Testing identifer and keyword", () => {
+    it("should return identifier token for any \
+    string contains only alpha and without double quotes", () => {
+        let scanner = new Scanner("counter")
+        let id_token = scanner.scan()
+        expect(id_token).toMatchObject({
+            lexeme: "counter",
+            token: Scanner.IDENTIFIER,
+            line: 0,
+        })
+    })
+})
+```
+run "npm test" and make sure it failed. Then we add code to make it passed:
+```js
+if (this.isDigit(this.peek())) {
+...} else (this.isAlpha(c)) {
+ char = ""
+                        while (this.isAlphaNumberic(this.peek())) {
+                            char += this.peek()
+                            this.current += 1
+                        }
+                        return this.makeToken(char, Scanner.IDENTIFIER, this.line)
+}
+```
+in the above code, if we encounter the first alpha, then we check following char is alpha or number or undersocore, if it is, we group them together as a unit and return them as a identifier token, run test again and make sure the test case can be passed. We continue to add
+new test case for identifer token, first we need to make sure any string that start with alpha, and follow with alpha, number and underscore can be lexed as identifier token:
+```js
+ it("should return identifier token for any \
+    string begin with underscore, and follow by alpha , number or underscore", () => {
+        let scanner = new Scanner("_counter_timer_123")
+        let id_token = scanner.scan()
+        expect(id_token).toMatchObject({
+            lexeme: "_counter_timer_123",
+            token: Scanner.IDENTIFIER,
+            line: 0,
+        })
+    })
+```
+this test case should be passed because we already statisfy it by our code, now we need to check the error cases, if a string start with number and follow with any characters that are not digit, we should return error token for such string, add the following test case:
+```js
+ it("should return error token for string start with number and \
+    follow with characters that are not digit", () => {
+        let scanner = new Scanner("123_abc")
+        let error_token = scanner.scan()
+        expect(error_token).toMatchObject({
+            lexeme: "illegal char in number string:_",
+            token: Scanner.ERROR,
+            line: 0,
+        })
+    })
+```
+now we need to modify code that recoginze number for this case to pass:
+```js
+if (this.isDigit(this.peek())) {
+ ...
+ if (this.peek() !== '\0') {
+                            return this.makeToken(`illegal char in number string:${this.peek()}`,
+                                Scanner.ERROR, this.line)
+                        }
+                        return this.makeToken(char, Scanner.NUMBER, this.line)
+}
+```
+in above code, if we go into number checking state, the scanner will only accept digit and '.', if it see any characters that are other than these two, it will report error. Now we are done with identifiers now.
