@@ -141,6 +141,7 @@ export default class Scanner {
             case ';':
             case '\n':
             case '\0':
+            case ')':
                 return true
         }
 
