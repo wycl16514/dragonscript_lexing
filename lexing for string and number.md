@@ -566,5 +566,31 @@ describe("Test mutiple tokens in line", () => {
 in aboved test case, we have multiple tokens in one line, run the test and you will see it fails. we haven't think about how to seperate
 tokens in one source properly, in lexing for number, we only consider the end of token is '\0', but actually number token can be end with space, '\t', '\r', '\n', let's take this into consideration, in token.js we add a new help function:
 ```js
+isEndOfToken = (c) => {
+        switch (c) {
+            case ' ':
+            case '\t':
+            case '\r':
+            case ';':
+            case '\n':
+            case '\0':
+                return true
+        }
 
+        return false
+    }
 ```
+then we change some code in the part of number lexing:
+```js
+if (this.isDigit(this.peek())) {
+...
+ if (this.isEndOfToken(this.peek()) === false) {
+                            return this.makeToken(`illegal char in number string:${this.peek()}`,
+                                Scanner.ERROR, this.line)
+                        }
+                        return this.makeToken(char, Scanner.NUMBER, this.line)
+}else if (this.isAlpha(this.peek())) {
+...
+}
+```
+run the test again and you should find it can be passed, we are done for lexing, we will use lexing algorithm to make some fun application.
