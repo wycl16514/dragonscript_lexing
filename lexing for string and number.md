@@ -521,4 +521,50 @@ now we can add those key words to map and make all those cases can passed:
     }
 
 ```
-after completing above code, make sure all test cases can be passed, that's all about how we handling key words.
+after completing above code, make sure all test cases can be passed, that's all about how we handling key words. Finally we still have a problem that is we assume there is only one token in source, how about several tokens in our source, look at the test case here:
+```js
+describe("Test mutiple tokens in line", () => {
+    it("should return correct tokens in line", () => {
+        let scanner = new Scanner("let \tcounter=\n123\r ;")
+        const let_token = scanner.scan()
+        expect(let_token).toMatchObject({
+            lexeme: "let",
+            token: Scanner.LET,
+            line: 0,
+        })
+
+        const identifier_token = scanner.scan()
+        expect(identifier_token).toMatchObject({
+            lexeme: "counter",
+            token: Scanner.IDENTIFIER,
+            line: 0,
+        })
+
+        const equal_token = scanner.scan()
+        expect(equal_token).toMatchObject({
+            lexeme: "=",
+            token: Scanner.EQUAL,
+            line: 0,
+        })
+
+        const number_token = scanner.scan()
+        expect(number_token).toMatchObject({
+            lexeme: "123",
+            token: Scanner.NUMBER,
+            line: 1,
+        })
+
+        const semicolon_token = scanner.scan()
+        expect(semicolon_token).toMatchObject({
+            lexeme: ";",
+            token: Scanner.SEMICOLON,
+            line: 1,
+        })
+    })
+})
+```
+in aboved test case, we have multiple tokens in one line, run the test and you will see it fails. we haven't think about how to seperate
+tokens in one source properly, in lexing for number, we only consider the end of token is '\0', but actually number token can be end with space, '\t', '\r', '\n', let's take this into consideration, in token.js we add a new help function:
+```js
+
+```
